@@ -1,4 +1,6 @@
-# Create
+# CRUD Operations
+
+## Create
 
 from bookshelf.models import Book
 
@@ -7,7 +9,9 @@ book
 
 # <Book: 1984 by George Orwell (1949)>
 
-# Retrieve
+---
+
+## Retrieve
 
 from bookshelf.models import Book
 
@@ -16,7 +20,9 @@ book.title, book.author, book.publication_year
 
 # ('1984', 'George Orwell', 1949)
 
-# Update
+---
+
+## Update
 
 book = Book.objects.first()
 book.title = "Nineteen Eighty-Four"
@@ -25,7 +31,9 @@ book.title
 
 # 'Nineteen Eighty-Four'
 
-# Delete
+---
+
+## Delete
 
 book = Book.objects.first()
 book.delete()
