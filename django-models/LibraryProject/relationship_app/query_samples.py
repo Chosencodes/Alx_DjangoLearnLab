@@ -5,7 +5,7 @@ def get_books_by_author(author):
     return Book.objects.filter(author=author)
 
 # List all books in a library
-def list_books_in_library(library_name):
+def get_books_in_library(library_name):
     library = Library.objects.get(name=library_name)
     return library.books.all()
 
