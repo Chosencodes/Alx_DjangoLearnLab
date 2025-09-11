@@ -1,12 +1,14 @@
 from django.shortcuts import render, get_object_or_404
+from django.views.generic import DetailView
 from .models import Book, Library
 
-# View to list all books and their authors
+# Function-based view to list all books
 def list_books(request):
-    books = Book.objects.select_related("author").all()
-    return render(request, "relationship_app/list_books.html", {"books": books})
+    books = Book.objects.all()
+    return render(request, 'relationship_app/list_books.html', {'books': books})
 
-# View to show library details with its librarian
-def library_detail(request, library_id):
-    library = get_object_or_404(Library, id=library_id)
-    return render(request, "relationship_app/library_detail.html", {"library": library})
+# Class-based view to show details of a specific library
+class LibraryDetailView(DetailView):
+    model = Library
+    template_name = 'relationship_app/library_detail.html'
+    context_object_name = 'library'
