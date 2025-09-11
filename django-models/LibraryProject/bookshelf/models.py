@@ -4,7 +4,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 # ----------------------
-# UserProfile for RBAC (Role-Based Access Control)
+# UserProfile for RBAC
 # ----------------------
 class UserProfile(models.Model):
     ROLE_CHOICES = [
