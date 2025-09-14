@@ -1,13 +1,11 @@
-# Python
+# Python bytecode
 __pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.log
+*.pyc
+
+# Database
 db.sqlite3
-media/
-staticfiles/
-.env
-.vscode/
-.idea/
-.DS_Store
+*.sqlite3
+
+# Virtual environment
+venv/
+env/
