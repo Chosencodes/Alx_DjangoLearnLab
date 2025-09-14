@@ -3,17 +3,11 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-
-# Django
 *.log
 db.sqlite3
 media/
 staticfiles/
 .env
-
-# VSCode / IDEs
 .vscode/
 .idea/
-
-# MacOS
 .DS_Store
