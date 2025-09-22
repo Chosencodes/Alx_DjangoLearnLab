@@ -120,3 +120,6 @@ X_FRAME_OPTIONS = 'DENY'
 # Custom User
 # -----------------------------
 AUTH_USER_MODEL = 'bookshelf.CustomUser'  # If using your CustomUser model
+
+# Trust the X-Forwarded-Proto header from the proxy (needed if behind HTTPS proxy)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
