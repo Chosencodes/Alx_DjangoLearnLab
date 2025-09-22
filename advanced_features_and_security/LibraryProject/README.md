@@ -1,24 +1,20 @@
-# LibraryProject
+# ALX Django Library Project
 
-## Custom User
+This project demonstrates a Django app with:
 
-- `CustomUser` extends `AbstractUser` with `date_of_birth` and `profile_photo`.
+- Custom User model
+- Book management (list, search, add)
+- Security best practices: CSRF, XSS protection, secure headers
+- Fully functional templates and forms
 
-## Book Model
+## How to Run
 
-- Permissions: `can_view`, `can_create`, `can_edit`, `can_delete`.
-- Views enforce permissions with `@permission_required`.
-
-## Admin
-
-- `CustomUserAdmin` configured to include extra fields.
-
-## Templates
-
-- `book_list.html` for viewing/searching books.
-- `form_example.html` for add/edit book forms.
-
-## Security
-
-- CSRF tokens included in all forms.
-- Permissions applied to restrict access to views.
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install django
+python3 manage.py makemigrations
+python3 manage.py migrate
+python3 manage.py createsuperuser
+python3 manage.py runserver
+```
