@@ -1,7 +1,7 @@
 from django.shortcuts import render
-from django.views.generic import DetailView
+from django.views.generic.detail import DetailView  # must be from detail
 from .models import Book
-from .models import Library
+from .models import Library  # keep separate lines since it works
 
 # -------------------------
 # Function-based view: list all books
