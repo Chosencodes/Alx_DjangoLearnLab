@@ -1,73 +1,43 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import login
-from django.views.generic.detail import DetailView  # must import from detail
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import permission_required
 from .models import Book
-from .models import Library  # keep separate lines since it works
-from django.contrib.auth.views import LoginView, LogoutView
-from django.contrib.auth.decorators import user_passes_test
+from .forms import BookForm
 
-# -------------------------
-# Function-based view: list all books
-# -------------------------
-def list_books(request):
+# List all books
+def book_list(request):
     books = Book.objects.all()
-    return render(request, "relationship_app/list_books.html", {"books": books})
+    return render(request, 'relationship_app/book_list.html', {'books': books})
 
-# -------------------------
-# Class-based view: details of a specific library
-# -------------------------
-class LibraryDetailView(DetailView):
-    model = Library
-    template_name = "relationship_app/library_detail.html"
-    context_object_name = "library"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Include all books that belong to this library
-        context["books"] = Book.objects.filter(library=self.object)
-        return context
-
-# -------------------------
-# Authentication views
-# -------------------------
-def register(request):
-    if request.method == "POST":
-        form = UserCreationForm(request.POST)
+# Add a new book (permission required)
+@permission_required('relationship_app.can_add_book', raise_exception=True)
+def book_add(request):
+    if request.method == 'POST':
+        form = BookForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)  # log in the user after registration
-            return redirect("list_books")
+            form.save()
+            return redirect('book_list')
     else:
-        form = UserCreationForm()
-    return render(request, "relationship_app/register.html", {"form": form})
+        form = BookForm()
+    return render(request, 'relationship_app/book_form.html', {'form': form})
 
-class UserLoginView(LoginView):
-    template_name = "relationship_app/login.html"
+# Edit an existing book (permission required)
+@permission_required('relationship_app.can_change_book', raise_exception=True)
+def book_edit(request, pk):
+    book = get_object_or_404(Book, pk=pk)
+    if request.method == 'POST':
+        form = BookForm(request.POST, instance=book)
+        if form.is_valid():
+            form.save()
+            return redirect('book_list')
+    else:
+        form = BookForm(instance=book)
+    return render(request, 'relationship_app/book_form.html', {'form': form})
 
-class UserLogoutView(LogoutView):
-    template_name = "relationship_app/logout.html"
-
-# -------------------------
-# Role-based access control
-# -------------------------
-def is_admin(user):
-    return user.userprofile.role == 'Admin'
-
-def is_librarian(user):
-    return user.userprofile.role == 'Librarian'
-
-def is_member(user):
-    return user.userprofile.role == 'Member'
-
-@user_passes_test(is_admin)
-def admin_view(request):
-    return render(request, "relationship_app/admin_view.html")
-
-@user_passes_test(is_librarian)
-def librarian_view(request):
-    return render(request, "relationship_app/librarian_view.html")
-
-@user_passes_test(is_member)
-def member_view(request):
-    return render(request, "relationship_app/member_view.html")
+# Delete a book (permission required)
+@permission_required('relationship_app.can_delete_book', raise_exception=True)
+def book_delete(request, pk):
+    book = get_object_or_404(Book, pk=pk)
+    if request.method == 'POST':
+        book.delete()
+        return redirect('book_list')
+    return render(request, 'relationship_app/book_confirm_delete.html', {'book': book})

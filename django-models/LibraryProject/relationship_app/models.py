@@ -23,7 +23,7 @@ def create_user_profile(sender, instance, created, **kwargs):
         UserProfile.objects.create(user=instance)
 
 
-# Library model (if you have multiple libraries)
+# Library model
 class Library(models.Model):
     name = models.CharField(max_length=255)
     location = models.CharField(max_length=255, blank=True, null=True)
@@ -36,10 +36,18 @@ class Library(models.Model):
 class Book(models.Model):
     title = models.CharField(max_length=255)
     author = models.CharField(max_length=255)
-    published_date = models.DateField(null=True, blank=True)  # nullable to prevent migration issues
-    library = models.ForeignKey(Library, on_delete=models.SET_NULL, null=True, blank=True)  # nullable to prevent migration issues
+    published_date = models.DateField(null=True, blank=True)
+    library = models.ForeignKey(Library, on_delete=models.SET_NULL, null=True, blank=True)
     isbn = models.CharField(max_length=13, unique=True, null=True, blank=True)
     copies_available = models.PositiveIntegerField(default=1)
 
     def __str__(self):
         return f"{self.title} by {self.author}"
+
+    # <-- Meta class must be indented inside the Book model
+    class Meta:
+        permissions = [
+            ("can_add_book", "Can add book"),
+            ("can_change_book", "Can change book"),
+            ("can_delete_book", "Can delete book"),
+        ]
