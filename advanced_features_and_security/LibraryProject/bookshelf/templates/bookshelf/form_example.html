@@ -1,0 +1,14 @@
+<form method="post">
+  {% csrf_token %}
+  <label>Title:</label>
+  <input type="text" name="title" value="{{ book.title|default:'' }}" /><br />
+  <label>Author:</label>
+  <input type="text" name="author" value="{{ book.author|default:'' }}" /><br />
+  <label>Published Date:</label>
+  <input
+    type="date"
+    name="published_date"
+    value="{{ book.published_date|default:'' }}"
+  /><br />
+  <button type="submit">Submit</button>
+</form>
