@@ -1,23 +1,28 @@
-{% extends "blog/base.html" %}
-{% block title %}Posts tagged with "{{ tag_name }}"{% endblock %}
+from django.urls import path
+from .views import (
+    PostListView, PostDetailView, PostCreateView, PostUpdateView, PostDeleteView,
+    CommentCreateView, CommentUpdateView, CommentDeleteView,
+    PostByTagListView, search_posts
+)
 
-{% block content %}
-<h2>Posts tagged with "{{ tag_name }}"</h2>
+app_name = 'blog'
 
-{% for post in posts %}
-    <article>
-        <h3><a href="{% url 'blog:post_detail' post.pk %}">{{ post.title }}</a></h3>
-        <p>{{ post.content|truncatewords:30 }}</p>
-        <p>Tags: 
-        {% for tag in post.tags.all %}
-            <a href="{% url 'blog:posts_by_tag' tag.name %}">{{ tag.name }}</a>{% if not forloop.last %}, {% endif %}
-        {% empty %}
-            No tags
-        {% endfor %}
-        </p>
-    </article>
-    <hr>
-{% empty %}
-    <p>No posts found for this tag.</p>
-{% endfor %}
-{% endblock %}
+urlpatterns = [
+    # Posts
+    path('', PostListView.as_view(), name='post_list'),
+    path('post/<int:pk>/', PostDetailView.as_view(), name='post_detail'),
+    path('post/new/', PostCreateView.as_view(), name='post_create'),
+    path('post/<int:pk>/update/', PostUpdateView.as_view(), name='post_update'),
+    path('post/<int:pk>/delete/', PostDeleteView.as_view(), name='post_delete'),
+
+    # Comments
+    path('post/<int:post_id>/comments/new/', CommentCreateView.as_view(), name='comment_create'),
+    path('comment/<int:pk>/update/', CommentUpdateView.as_view(), name='comment_update'),
+    path('comment/<int:pk>/delete/', CommentDeleteView.as_view(), name='comment_delete'),
+
+    # Tagging
+    path('tags/<slug:tag_slug>/', PostByTagListView.as_view(), name='posts-by-tag'),
+
+    # Search
+    path('search/', search_posts, name='search_posts'),
+]

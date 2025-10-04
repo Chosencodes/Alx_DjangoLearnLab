@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
@@ -6,7 +6,7 @@ from django.urls import reverse_lazy
 from django.db.models import Q
 from .models import Post, Comment
 from .forms import PostForm, CommentForm
-
+from taggit.models import Tag
 
 # ---------------------
 # Post CRUD
@@ -97,12 +97,21 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def get_success_url(self):
         return reverse_lazy('blog:post_detail', kwargs={'pk': self.object.post.pk})
 
-# Tagged posts view
-def tagged_posts(request, tag):
-    posts = Post.objects.filter(tags__name__in=[tag])
-    return render(request, 'blog/tagged_posts.html', {'posts': posts, 'tag': tag})
+# ---------------------
+# Tagging
+# ---------------------
+class PostByTagListView(ListView):
+    model = Post
+    template_name = 'blog/posts_by_tag.html'
+    context_object_name = 'posts'
 
-# Search posts view
+    def get_queryset(self):
+        tag_slug = self.kwargs.get('tag_slug')
+        return Post.objects.filter(tags__slug=tag_slug).order_by('-date_posted')
+
+# ---------------------
+# Search
+# ---------------------
 def search_posts(request):
     query = request.GET.get('q', '')
     posts = Post.objects.filter(
