@@ -130,8 +130,8 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
     template_name = "blog/comment_form.html"  # fallback, but we will post from the post_detail page
 
     def form_valid(self, form):
-        post_pk = self.kwargs.get("post_pk")
-        post = get_object_or_404(Post, pk=post_pk)
+        post_id = self.kwargs.get("post_id")
+        post = get_object_or_404(Post, pk=post_id)
         form.instance.post = post
         form.instance.author = self.request.user
         messages.success(self.request, "Comment added.")
