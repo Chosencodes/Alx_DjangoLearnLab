@@ -1,9 +1,6 @@
 {% extends "blog/base.html" %}
-{% block title %}{% if form.instance.pk %}Edit Comment{% else %}Add Comment{% endif %}{% endblock %}
-
 {% block content %}
-<h2>{% if form.instance.pk %}Edit Comment{% else %}Add Comment{% endif %}</h2>
-
+<h1>{% if form.instance.pk %}Edit{% else %}New{% endif %} Comment</h1>
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
