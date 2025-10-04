@@ -1,5 +1,4 @@
-from django.views import View
-from django.shortcuts import reverse, render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404, reverse
 from django.contrib.auth import login
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import login_required
@@ -11,10 +10,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Post, Comment
 from .forms import SignUpForm, ProfileForm, PostForm, CommentForm
 
-# ===========================
-# 🧩 AUTHENTICATION VIEWS
-# ===========================
-
+# ---------------------
+# Authentication views
+# ---------------------
 def register(request):
     if request.method == "POST":
         form = SignUpForm(request.POST)
@@ -27,14 +25,11 @@ def register(request):
         form = SignUpForm()
     return render(request, "blog/register.html", {"form": form})
 
-
 class CustomLoginView(LoginView):
     template_name = "blog/login.html"
 
-
 class CustomLogoutView(LogoutView):
     template_name = "blog/logout.html"
-
 
 @login_required
 def profile(request):
@@ -48,17 +43,14 @@ def profile(request):
         form = ProfileForm(instance=request.user)
     return render(request, "blog/profile.html", {"form": form})
 
-
-# ===========================
-# 📝 BLOG POST CRUD VIEWS
-# ===========================
-
+# ---------------------
+# Post CRUD views
+# ---------------------
 class PostListView(ListView):
     model = Post
     template_name = "blog/post_list.html"
     context_object_name = "posts"
-    ordering = ["-created_at"]
-
+    ordering = ["-date_posted"]
 
 class PostDetailView(DetailView):
     model = Post
@@ -66,11 +58,10 @@ class PostDetailView(DetailView):
     context_object_name = "post"
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["form"] = CommentForm()
-        context["comments"] = self.object.comments.all()
-        return context
-
+        ctx = super().get_context_data(**kwargs)
+        ctx["form"] = CommentForm()
+        ctx["comments"] = self.object.comments.all()
+        return ctx
 
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
@@ -82,7 +73,6 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         form.instance.author = self.request.user
         messages.success(self.request, "Post created successfully!")
         return super().form_valid(form)
-
 
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post
@@ -98,7 +88,6 @@ class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         messages.success(self.request, "Post updated successfully!")
         return super().form_valid(form)
 
-
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Post
     template_name = "blog/post_confirm_delete.html"
@@ -112,11 +101,9 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         messages.success(self.request, "Post deleted successfully!")
         return super().delete(request, *args, **kwargs)
 
-
-# ===========================
-# 💬 COMMENT VIEWS
-# ===========================
-
+# ---------------------
+# Comment CRUD views
+# ---------------------
 class CommentCreateView(LoginRequiredMixin, CreateView):
     model = Comment
     form_class = CommentForm
@@ -133,7 +120,6 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
     def get_success_url(self):
         return reverse("blog:post_detail", kwargs={"pk": self.object.post.pk})
 
-
 class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Comment
     form_class = CommentForm
@@ -145,7 +131,6 @@ class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def get_success_url(self):
         return reverse("blog:post_detail", kwargs={"pk": self.object.post.pk})
-
 
 class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Comment

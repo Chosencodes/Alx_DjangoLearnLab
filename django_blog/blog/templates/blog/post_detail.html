@@ -1,44 +1,28 @@
-{% extends 'base.html' %}
-{% block content %}
-<article>
-  <h1>{{ post.title }}</h1>
-  <p>{{ post.content|linebreaks }}</p>
-  <small>By {{ post.author.username }} on {{ post.created_at }}</small>
-</article>
+<!-- show comments -->
+<h3>Comments ({{ post.comments.count }})</h3>
+{% for comment in post.comments.all %}
+  <div>
+    <p>{{ comment.content }}</p>
+    <small>By {{ comment.author.username }} • {{ comment.created_at|date:"Y-m-d H:i" }}</small>
+    {% if user == comment.author %}
+      <p>
+        <a href="{% url 'blog:comment_update' comment.pk %}">Edit</a> |
+        <a href="{% url 'blog:comment_delete' comment.pk %}">Delete</a>
+      </p>
+    {% endif %}
+  </div>
+{% empty %}
+  <p>No comments yet.</p>
+{% endfor %}
 
-<hr>
-<section id="comments">
-  <h3>Comments ({{ post.comments.count }})</h3>
-
-  {% for comment in post.comments.all %}
-    <div style="border:1px solid #ddd; padding:8px; margin-bottom:8px;">
-      <p>{{ comment.content|linebreaks }}</p>
-      <small>By {{ comment.author.username }} — {{ comment.created_at }}</small>
-      {% if request.user == comment.author %}
-        <p>
-          <a href="{% url 'blog:comment_update' comment.pk %}">Edit</a> |
-          <a href="{% url 'blog:comment_delete' comment.pk %}">Delete</a>
-        </p>
-      {% endif %}
-    </div>
-  {% empty %}
-    <p>No comments yet. Be the first to comment!</p>
-  {% endfor %}
-</section>
-
-<hr>
-<section id="add-comment">
-  {% if user.is_authenticated %}
-    <h3>Leave a comment</h3>
-    <form action="{% url 'blog:comment_create' post.pk %}" method="post">
-      {% csrf_token %}
-      {{ form.as_p }} {# we will supply form in context or use CommentForm fields here #}
-      <button type="submit">Post comment</button>
-    </form>
-  {% else %}
-    <p><a href="{% url 'blog:login' %}">Log in</a> to leave a comment.</p>
-  {% endif %}
-</section>
-
-<a href="{% url 'blog:post_list' %}">Back to posts</a>
-{% endblock %}
+<!-- inline new-comment form -->
+{% if user.is_authenticated %}
+  <h4>Leave a comment</h4>
+  <form action="{% url 'blog:comment_create' post.id %}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Post comment</button>
+  </form>
+{% else %}
+  <p><a href="{% url 'blog:login' %}">Log in</a> to comment.</p>
+{% endif %}
