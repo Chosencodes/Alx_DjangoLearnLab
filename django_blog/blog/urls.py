@@ -1,20 +1,29 @@
 from django.urls import path
-from . import views
+from .views import (
+    register,
+    CustomLoginView,
+    CustomLogoutView,
+    profile,
+    PostListView,
+    PostDetailView,
+    PostCreateView,
+    PostUpdateView,
+    PostDeleteView,
+)
 
 app_name = "blog"
 
 urlpatterns = [
-    # your blog views, e.g.:
-    # path("", views.post_list, name="post_list"),
+    # Authentication
+    path("register/", register, name="register"),
+    path("login/", CustomLoginView.as_view(), name="login"),
+    path("logout/", CustomLogoutView.as_view(), name="logout"),
+    path("profile/", profile, name="profile"),
 
-    # auth
-    path("register/", views.register, name="register"),
-    path("login/", views.CustomLoginView.as_view(), name="login"),
-    path("logout/", views.CustomLogoutView.as_view(), name="logout"),
-    path("profile/", views.profile, name="profile"),
-    path("posts/", views.PostListView.as_view(), name="post_list"),               # /posts/
-    path("posts/new/", views.PostCreateView.as_view(), name="post_create"),      # /posts/new/
-    path("posts/<int:pk>/", views.PostDetailView.as_view(), name="post_detail"), # /posts/<pk>/
-    path("posts/<int:pk>/edit/", views.PostUpdateView.as_view(), name="post_edit"), # /posts/<pk>/edit/
-    path("posts/<int:pk>/delete/", views.PostDeleteView.as_view(), name="post_delete"), # /posts/<pk>/delete/
+    # Blog Post CRUD
+    path("", PostListView.as_view(), name="post_list"),
+    path("post/<int:pk>/", PostDetailView.as_view(), name="post_detail"),
+    path("post/new/", PostCreateView.as_view(), name="post_create"),
+    path("post/<int:pk>/update/", PostUpdateView.as_view(), name="post_update"),
+    path("post/<int:pk>/delete/", PostDeleteView.as_view(), name="post_delete"),
 ]
