@@ -1,6 +1,8 @@
 from django import forms
 from django.contrib.auth.models import User
 from .models import Post, Comment
+from taggit.forms import TagWidget
+
 
 # minimal SignUpForm (so views importing it won't fail)
 class SignUpForm(forms.ModelForm):
@@ -20,16 +22,17 @@ class ProfileForm(forms.ModelForm):
 class PostForm(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ['title', 'content', 'tags']
-
+        fields = ['title', 'content', 'tags']  # include tags
+        widgets = {
+            'tags': TagWidget(attrs={'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'content': forms.Textarea(attrs={'class': 'form-control'}),
+        }
 
 class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ['content']
-
-    def clean_content(self):
-        content = self.cleaned_data.get('content', '')
-        if not content or len(content.strip()) == 0:
-            raise forms.ValidationError("Comment cannot be empty.")
-        return content
+        widgets = {
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
