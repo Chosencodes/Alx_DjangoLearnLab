@@ -1,8 +1,5 @@
 from django.views import View
-from django.shortcuts import reverse
-from .models import Comment
-from .forms import CommentForm
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import reverse, render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import login_required
@@ -11,8 +8,8 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
-from .models import Post
-from .forms import SignUpForm, ProfileForm, PostForm
+from .models import Post, Comment
+from .forms import SignUpForm, ProfileForm, PostForm, CommentForm
 
 # ===========================
 # 🧩 AUTHENTICATION VIEWS
@@ -23,7 +20,7 @@ def register(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)  # Log in immediately after registration
+            login(request, user)
             messages.success(request, "Registration successful. Welcome!")
             return redirect(reverse_lazy("blog:post_list"))
     else:
@@ -56,7 +53,6 @@ def profile(request):
 # 📝 BLOG POST CRUD VIEWS
 # ===========================
 
-# List all posts
 class PostListView(ListView):
     model = Post
     template_name = "blog/post_list.html"
@@ -64,7 +60,6 @@ class PostListView(ListView):
     ordering = ["-created_at"]
 
 
-# View a single post
 class PostDetailView(DetailView):
     model = Post
     template_name = "blog/post_detail.html"
@@ -76,7 +71,7 @@ class PostDetailView(DetailView):
         context["comments"] = self.object.comments.all()
         return context
 
-# Create a new post
+
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
     form_class = PostForm
@@ -84,12 +79,11 @@ class PostCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy("blog:post_list")
 
     def form_valid(self, form):
-        form.instance.author = self.request.user  # Set author to logged-in user
+        form.instance.author = self.request.user
         messages.success(self.request, "Post created successfully!")
         return super().form_valid(form)
 
 
-# Update an existing post
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post
     form_class = PostForm
@@ -105,7 +99,6 @@ class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return super().form_valid(form)
 
 
-# Delete a post
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Post
     template_name = "blog/post_confirm_delete.html"
@@ -119,22 +112,22 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         messages.success(self.request, "Post deleted successfully!")
         return super().delete(request, *args, **kwargs)
 
-# ---------------------------
-# Comment views
-# ---------------------------
 
-# Create comment (user must be logged in)
+# ===========================
+# 💬 COMMENT VIEWS
+# ===========================
+
 class CommentCreateView(LoginRequiredMixin, CreateView):
     model = Comment
     form_class = CommentForm
-    template_name = "blog/comment_form.html"  # fallback, but we will post from the post_detail page
+    template_name = "blog/comment_form.html"
 
     def form_valid(self, form):
         post_id = self.kwargs.get("post_id")
         post = get_object_or_404(Post, pk=post_id)
         form.instance.post = post
         form.instance.author = self.request.user
-        messages.success(self.request, "Comment added.")
+        messages.success(self.request, "Comment added successfully!")
         return super().form_valid(form)
 
     def get_success_url(self):
