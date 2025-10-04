@@ -10,6 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Post, Comment
 from .forms import SignUpForm, ProfileForm, PostForm, CommentForm
 
+
 # ---------------------
 # Authentication views
 # ---------------------
@@ -25,11 +26,14 @@ def register(request):
         form = SignUpForm()
     return render(request, "blog/register.html", {"form": form})
 
+
 class CustomLoginView(LoginView):
     template_name = "blog/login.html"
 
+
 class CustomLogoutView(LogoutView):
     template_name = "blog/logout.html"
+
 
 @login_required
 def profile(request):
@@ -43,6 +47,7 @@ def profile(request):
         form = ProfileForm(instance=request.user)
     return render(request, "blog/profile.html", {"form": form})
 
+
 # ---------------------
 # Post CRUD views
 # ---------------------
@@ -51,6 +56,7 @@ class PostListView(ListView):
     template_name = "blog/post_list.html"
     context_object_name = "posts"
     ordering = ["-date_posted"]
+
 
 class PostDetailView(DetailView):
     model = Post
@@ -63,6 +69,7 @@ class PostDetailView(DetailView):
         ctx["comments"] = self.object.comments.all()
         return ctx
 
+
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
     form_class = PostForm
@@ -73,6 +80,7 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         form.instance.author = self.request.user
         messages.success(self.request, "Post created successfully!")
         return super().form_valid(form)
+
 
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post
@@ -88,6 +96,7 @@ class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         messages.success(self.request, "Post updated successfully!")
         return super().form_valid(form)
 
+
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Post
     template_name = "blog/post_confirm_delete.html"
@@ -101,8 +110,15 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         messages.success(self.request, "Post deleted successfully!")
         return super().delete(request, *args, **kwargs)
 
-def comment_create(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
+
+# ---------------------
+# Comment views
+# ---------------------
+
+# Function-based view for creating a comment
+@login_required
+def comment_create(request, pk):
+    post = get_object_or_404(Post, id=pk)
 
     if request.method == 'POST':
         form = CommentForm(request.POST)
@@ -118,25 +134,8 @@ def comment_create(request, post_id):
 
     return render(request, 'blog/comment_form.html', {'form': form, 'post': post})
 
-# ---------------------
-# Comment CRUD views
-# ---------------------
-class CommentCreateView(LoginRequiredMixin, CreateView):
-    model = Comment
-    form_class = CommentForm
-    template_name = "blog/comment_form.html"
 
-    def form_valid(self, form):
-        post_id = self.kwargs.get("post_id")
-        post = get_object_or_404(Post, pk=post_id)
-        form.instance.post = post
-        form.instance.author = self.request.user
-        messages.success(self.request, "Comment added successfully!")
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse("blog:post_detail", kwargs={"pk": self.object.post.pk})
-
+# Class-based views for editing and deleting comments
 class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Comment
     form_class = CommentForm
@@ -148,6 +147,7 @@ class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def get_success_url(self):
         return reverse("blog:post_detail", kwargs={"pk": self.object.post.pk})
+
 
 class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Comment
