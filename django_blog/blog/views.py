@@ -7,6 +7,7 @@ from django.db.models import Q
 from .models import Post, Comment
 from .forms import PostForm, CommentForm
 
+
 # ---------------------
 # Post CRUD
 # ---------------------
@@ -96,15 +97,14 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def get_success_url(self):
         return reverse_lazy('blog:post_detail', kwargs={'pk': self.object.post.pk})
 
-# ---------------------
-# Tag and Search
-# ---------------------
-def posts_by_tag(request, tag_name):
-    posts = Post.objects.filter(tags__name__in=[tag_name])
-    return render(request, 'blog/post_list.html', {'posts': posts, 'tag': tag_name})
+# Tagged posts view
+def tagged_posts(request, tag):
+    posts = Post.objects.filter(tags__name__in=[tag])
+    return render(request, 'blog/tagged_posts.html', {'posts': posts, 'tag': tag})
 
+# Search posts view
 def search_posts(request):
-    query = request.GET.get('q')
+    query = request.GET.get('q', '')
     posts = Post.objects.filter(
         Q(title__icontains=query) |
         Q(content__icontains=query) |
