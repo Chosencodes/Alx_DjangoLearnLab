@@ -35,3 +35,37 @@ class CommentForm(forms.ModelForm):
         if len(content) < 3:
             raise forms.ValidationError("Comment is too short (min 3 characters).")
         return content
+from django import forms
+from django.contrib.auth.models import User
+from .models import Post, Comment
+
+class SignUpForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password']
+
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+
+
+class PostForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = ['title', 'content']
+
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['content']
+
+    def clean_content(self):
+        content = self.cleaned_data.get('content', '').strip()
+        if len(content) < 1:
+            raise forms.ValidationError("Comment cannot be empty.")
+        return content
