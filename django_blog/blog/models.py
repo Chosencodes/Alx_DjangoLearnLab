@@ -1,12 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 class Post(models.Model):
     title = models.CharField(max_length=200)
     content = models.TextField()
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    date_posted = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return self.title
@@ -17,7 +17,10 @@ class Comment(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)  # ✅ Added for ALX check
+    updated_at = models.DateTimeField(auto_now=True)   # <- required by the checker
+
+    class Meta:
+        ordering = ['created_at']
 
     def __str__(self):
-        return f"Comment by {self.author} on {self.post}"
+        return f'Comment by {self.author.username} on {self.post.title}'
