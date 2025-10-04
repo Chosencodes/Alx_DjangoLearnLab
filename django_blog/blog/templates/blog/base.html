@@ -1,22 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>My Django Blog</title>
+    <meta charset="UTF-8">
+    <title>{% block title %}My Blog{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'blog/style.css' %}">
 </head>
 <body>
-    <nav>
-        {% if user.is_authenticated %}
-            <p>Welcome, {{ user.username }} | 
-               <a href="{% url 'blog:logout' %}">Logout</a> | 
-               <a href="{% url 'blog:profile' %}">Profile</a>
-            </p>
-        {% else %}
-            <a href="{% url 'blog:login' %}">Login</a> | 
-            <a href="{% url 'blog:register' %}">Register</a>
-        {% endif %}
+    <header>
+        <h1><a href="{% url 'blog:post_list' %}">My Django Blog</a></h1>
+        <nav>
+            {% if user.is_authenticated %}
+                <a href="{% url 'blog:post_create' %}">New Post</a> |
+                <a href="{% url 'blog:profile' %}">Profile</a> |
+                <a href="{% url 'logout' %}">Logout</a>
+            {% else %}
+                <a href="{% url 'login' %}">Login</a> |
+                <a href="{% url 'blog:register' %}">Register</a>
+            {% endif %}
+        </nav>
+        <form method="get" action="{% url 'blog:search_posts' %}">
+            <input type="text" name="q" placeholder="Search posts..." value="{{ request.GET.q }}">
+            <button type="submit">Search</button>
+        </form>
         <hr>
-    </nav>
+    </header>
 
-    {% block content %}{% endblock %}
+    <main>
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <hr>
+        <p>&copy; {{ now.year }} My Django Blog</p>
+    </footer>
 </body>
 </html>
