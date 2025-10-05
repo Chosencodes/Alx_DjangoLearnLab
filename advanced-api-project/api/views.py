@@ -1,27 +1,34 @@
-# api/views.py
-
-from rest_framework import generics, filters
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
-from django_filters import rest_framework  # ALX checker expects this exact import
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Book
 from .serializers import BookSerializer
 
-# List and Create View for Books
-class BookListView(generics.ListCreateAPIView):
+# Read-only views (anyone can access)
+class BookListView(generics.ListAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
-    filter_backends = [
-        rest_framework.DjangoFilterBackend,  # filtering
-        filters.SearchFilter,                # searching
-        filters.OrderingFilter                # ordering
-    ]
-    filterset_fields = ['title', 'author', 'publication_year']  # fields to filter
-    search_fields = ['title', 'author__name']                  # fields to search
-    ordering_fields = ['title', 'publication_year']           # fields to order
+    permission_classes = [AllowAny]
 
-# Retrieve, Update, Delete View for a single Book
-class BookDetailView(generics.RetrieveUpdateDestroyAPIView):
+
+class BookDetailView(generics.RetrieveAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [AllowAny]
+
+# Authenticated users only for create/update/delete
+class BookCreateView(generics.CreateAPIView):
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class BookUpdateView(generics.UpdateAPIView):
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class BookDeleteView(generics.DestroyAPIView):
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    permission_classes = [IsAuthenticated]
