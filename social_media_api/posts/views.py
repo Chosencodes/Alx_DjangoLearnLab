@@ -8,19 +8,20 @@ from django.contrib.auth import authenticate
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from .serializers import UserSerializer, PostSerializer, CommentSerializer, LikeSerializer
 from .models import Post, Comment, Like
+from posts.pagination import StandardResultsSetPagination  # if exists, else fallback
 
-# ==========================
-# 🔹 AUTHENTICATION VIEWS
-# ==========================
 class FeedView(generics.ListAPIView):
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         user = self.request.user
-        return Post.objects.filter(author__in=user.following.all()).order_by('-created_at')
+        following_users = user.following.all()  # must be named exactly like this
+        return Post.objects.filter(author__in=following_users).order_by('-created_at')
+    
 
-
+    
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
