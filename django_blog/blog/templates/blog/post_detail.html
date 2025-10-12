@@ -14,7 +14,7 @@
   <h3>Comments ({{ post.comments.count }})</h3>
 
   {% if user.is_authenticated %}
-    <form method="post" action="{% url 'blog:comment_create' post_id=post.pk %}">
+    <form method="post" action="{% url 'blog:comment_create' pk=post.pk %}">
       {% csrf_token %}
       {{ comment_form.as_p }}
       <button type="submit">Add Comment</button>
@@ -31,8 +31,9 @@
 
         {% if user == comment.author %}
           <p>
-            <a href="{% url 'blog:comment_update' post_id=post.pk pk=comment.pk %}">Edit</a> |
-            <a href="{% url 'blog:comment_delete' post_id=post.pk pk=comment.pk %}">Delete</a>
+            <<a href="{% url 'blog:comment_update' pk=comment.pk %}">Edit</a> |
+            <a href="{% url 'blog:comment_delete' pk=comment.pk %}">Delete</a>
+
           </p>
         {% endif %}
       </li>
