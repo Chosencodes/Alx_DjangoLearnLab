@@ -1,45 +1,30 @@
 from django.shortcuts import render, redirect
-from django.contrib import messages
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm
-from django.views.generic import (
-    ListView, DetailView, CreateView, UpdateView, DeleteView
-)
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from .models import Post
-from .forms import PostForm
+from .forms import UserRegisterForm, PostForm
 
-
-# Registration view
+# Register and profile views
 def register(request):
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
-            messages.success(request, f'Account created for {user.username}. You can now log in.')
-            return redirect('blog:login')
+            login(request, user)
+            return redirect('blog:post_list')
     else:
         form = UserRegisterForm()
     return render(request, 'blog/register.html', {'form': form})
 
-# Profile view (view & edit)
 @login_required
 def profile(request):
-    if request.method == 'POST':
-        u_form = UserUpdateForm(request.POST, instance=request.user)
-        p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
-        if u_form.is_valid() and p_form.is_valid():
-            u_form.save()
-            p_form.save()
-            messages.success(request, 'Your profile has been updated.')
-            return redirect('blog:profile')
-    else:
-        u_form = UserUpdateForm(instance=request.user)
-        p_form = ProfileUpdateForm(instance=request.user.profile)
-    context = {'u_form': u_form, 'p_form': p_form}
-    return render(request, 'blog/profile.html', context)
+    return render(request, 'blog/profile.html')
 
+
+# === CRUD views ===
 class PostListView(ListView):
     model = Post
     template_name = 'blog/post_list.html'
@@ -50,7 +35,6 @@ class PostListView(ListView):
 class PostDetailView(DetailView):
     model = Post
     template_name = 'blog/post_detail.html'
-    context_object_name = 'post'
 
 
 class PostCreateView(LoginRequiredMixin, CreateView):
@@ -79,8 +63,8 @@ class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Post
-    template_name = 'blog/post_confirm_delete.html'
     success_url = reverse_lazy('blog:post_list')
+    template_name = 'blog/post_confirm_delete.html'
 
     def test_func(self):
         post = self.get_object()
