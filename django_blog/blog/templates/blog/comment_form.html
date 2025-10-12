@@ -1,9 +1,10 @@
 {% extends "blog/base.html" %}
 {% block content %}
-<h1>{% if form.instance.pk %}Edit{% else %}New{% endif %} Comment</h1>
-<form method="post">
+  <h2>{% if form.instance.pk %}Edit Comment{% else %}New Comment{% endif %}</h2>
+  <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">{% if form.instance.pk %}Update{% else %}Add{% endif %}</button>
-</form>
+    <button type="submit">Save</button>
+    <a href="{% url 'blog:post_detail' pk=view.kwargs.post_id %}">Cancel</a>
+  </form>
 {% endblock %}
