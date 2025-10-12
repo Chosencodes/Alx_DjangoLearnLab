@@ -1,5 +1,5 @@
 # accounts/views.py
-from rest_framework import generics, status
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -30,6 +30,26 @@ except ImportError:
         max_page_size = 100
 
 User = get_user_model()
+
+class FollowUserView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, user_id):
+        target_user = get_object_or_404(User, id=user_id)
+        if target_user == request.user:
+            return Response({"detail": "Cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        request.user.following.add(target_user)
+        return Response({"status": "followed"}, status=status.HTTP_200_OK)
+
+
+class UnfollowUserView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, user_id):
+        target_user = get_object_or_404(User, id=user_id)
+        request.user.following.remove(target_user)
+        return Response({"status": "unfollowed"}, status=status.HTTP_200_OK)
 
 # ---------------- FOLLOW SYSTEM ---------------- #
 class FollowToggleView(APIView):
@@ -124,18 +144,3 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
-class FollowUserView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, user_id):
-        target = get_object_or_404(User, pk=user_id)
-        if target == request.user:
-            return Response({"detail": "Cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if target in request.user.following.all():
-            request.user.following.remove(target)
-            action = "unfollowed"
-        else:
-            request.user.following.add(target)
-            action = "followed"
-        return Response({"status": action}, status=status.HTTP_200_OK)
