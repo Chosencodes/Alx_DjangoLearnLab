@@ -123,3 +123,19 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+class FollowUserView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        target = get_object_or_404(User, pk=user_id)
+        if target == request.user:
+            return Response({"detail": "Cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if target in request.user.following.all():
+            request.user.following.remove(target)
+            action = "unfollowed"
+        else:
+            request.user.following.add(target)
+            action = "followed"
+        return Response({"status": action}, status=status.HTTP_200_OK)
