@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
-from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404
 
 # Feed view
@@ -11,7 +11,7 @@ from rest_framework.generics import ListAPIView
 from posts.models import Post
 from posts.serializers import PostSerializer
 
-# Pagination (safe fallback)
+# Pagination fallback
 try:
     from posts.pagination import StandardResultsSetPagination
 except ImportError:
@@ -25,16 +25,16 @@ except ImportError:
 # Serializers
 from .serializers import RegisterSerializer, UserSerializer
 
-# Use custom user model
-User = get_user_model()
+# Explicit CustomUser import
+from .models import CustomUser
 
 
 # ---------------- FOLLOW SYSTEM ---------------- #
 class FollowUserView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, user_id):
-        target_user = get_object_or_404(User, id=user_id)
+        target_user = get_object_or_404(CustomUser, id=user_id)
         if target_user == request.user:
             return Response({"detail": "Cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
         request.user.following.add(target_user)
@@ -42,19 +42,19 @@ class FollowUserView(generics.GenericAPIView):
 
 
 class UnfollowUserView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, user_id):
-        target_user = get_object_or_404(User, id=user_id)
+        target_user = get_object_or_404(CustomUser, id=user_id)
         request.user.following.remove(target_user)
         return Response({"status": "unfollowed"}, status=status.HTTP_200_OK)
 
 
 class FollowToggleView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, user_id):
-        target = get_object_or_404(User, pk=user_id)
+        target = get_object_or_404(CustomUser, pk=user_id)
         if target == request.user:
             return Response({"detail": "Cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -65,7 +65,7 @@ class FollowToggleView(APIView):
             request.user.following.add(target)
             action = 'followed'
 
-            # Notifications (optional)
+            # Optional notifications
             try:
                 from notifications.models import Notification
                 Notification.objects.create(
@@ -80,7 +80,7 @@ class FollowToggleView(APIView):
 
 
 class FollowListView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         following = request.user.following.all()
@@ -94,7 +94,7 @@ class FollowListView(APIView):
 # ---------------- FEED SYSTEM ---------------- #
 class FeedView(ListAPIView):
     serializer_class = PostSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
@@ -105,13 +105,13 @@ class FeedView(ListAPIView):
 
 # ---------------- AUTH ---------------- #
 class RegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()
+    queryset = CustomUser.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
-        user = User.objects.get(username=response.data['username'])
+        user = CustomUser.objects.get(username=response.data['username'])
         token, _ = Token.objects.get_or_create(user=user)
         response.data['token'] = token.key
         return response
@@ -137,7 +137,7 @@ class LoginView(APIView):
 
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
         return self.request.user
