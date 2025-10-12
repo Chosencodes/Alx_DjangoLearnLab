@@ -1,14 +1,18 @@
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status, viewsets
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
-from rest_framework import status
 from rest_framework.views import APIView
-from .serializers import UserSerializer
-from rest_framework.permissions import AllowAny
 from django.contrib.auth import authenticate
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
+from .serializers import UserSerializer, PostSerializer, CommentSerializer
+from .models import Post, Comment
 
-# Registration View
+
+# ==========================
+# 🔹 AUTHENTICATION VIEWS
+# ==========================
+
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -22,7 +26,6 @@ class RegisterView(generics.CreateAPIView):
         return response
 
 
-# Login View
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -39,3 +42,37 @@ class LoginView(APIView):
                 {"error": "Invalid Credentials"},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+
+
+# ==========================
+# 🔹 BLOG APP (POSTS & COMMENTS)
+# ==========================
+
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    """
+    Custom permission to only allow owners of an object to edit or delete it.
+    """
+    def has_object_permission(self, request, view, obj):
+        # Read-only permissions are allowed for any request (GET, HEAD, OPTIONS)
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        # Write permissions are only allowed to the owner of the object
+        return obj.author == request.user
+
+
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
