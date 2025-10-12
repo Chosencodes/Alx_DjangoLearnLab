@@ -1,15 +1,91 @@
+# accounts/views.py
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, get_user_model
+from django.shortcuts import get_object_or_404
+
+# Import for feed view
+from rest_framework.generics import ListAPIView
+
+# Import your serializers
 from .serializers import RegisterSerializer, UserSerializer
+
+# Import your Post model and serializer for FeedView
+from posts.models import Post
+from posts.serializers import PostSerializer
+
+# Import pagination safely
+try:
+    from posts.pagination import StandardResultsSetPagination
+except ImportError:
+    # fallback if pagination not yet created
+    from rest_framework.pagination import PageNumberPagination
+
+    class StandardResultsSetPagination(PageNumberPagination):
+        page_size = 10
+        page_size_query_param = 'page_size'
+        max_page_size = 100
 
 User = get_user_model()
 
+# ---------------- FOLLOW SYSTEM ---------------- #
+class FollowToggleView(APIView):
+    permission_classes = [IsAuthenticated]
 
-# Register a new user and return token
+    def post(self, request, user_id):
+        target = get_object_or_404(User, pk=user_id)
+        if target == request.user:
+            return Response({"detail": "Cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if target in request.user.following.all():
+            request.user.following.remove(target)
+            action = 'unfollowed'
+        else:
+            request.user.following.add(target)
+            action = 'followed'
+
+            # Notification (optional, safe import)
+            try:
+                from notifications.models import Notification
+                Notification.objects.create(
+                    recipient=target,
+                    actor=request.user,
+                    verb='followed you'
+                )
+            except ImportError:
+                pass
+
+        return Response({"status": action}, status=status.HTTP_200_OK)
+
+
+class FollowListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        following = request.user.following.all()
+        followers = request.user.followers.all()
+        return Response({
+            "following": [{"id": u.id, "username": u.username} for u in following],
+            "followers": [{"id": u.id, "username": u.username} for u in followers],
+        }, status=status.HTTP_200_OK)
+
+
+# ---------------- FEED SYSTEM ---------------- #
+class FeedView(ListAPIView):
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        following_qs = user.following.all()
+        return Post.objects.filter(author__in=following_qs).order_by('-created_at')
+
+
+# ---------------- AUTH ---------------- #
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
@@ -23,7 +99,6 @@ class RegisterView(generics.CreateAPIView):
         return response
 
 
-# Login existing user and return token
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -42,7 +117,6 @@ class LoginView(APIView):
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
-# View and update user profile (requires authentication)
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]

@@ -1,13 +1,13 @@
-from rest_framework import generics, permissions, status, viewsets
+from rest_framework import generics, status, viewsets, permissions
+from rest_framework.decorators import action  # ✅ add this line
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate
-from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
-from .serializers import UserSerializer, PostSerializer, CommentSerializer
-from .models import Post, Comment
-
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
+from .serializers import UserSerializer, PostSerializer, CommentSerializer, LikeSerializer
+from .models import Post, Comment, Like
 
 # ==========================
 # 🔹 AUTHENTICATION VIEWS
@@ -16,7 +16,7 @@ from .models import Post, Comment
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [AllowAny]  # anyone can register
+    permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
@@ -34,31 +34,29 @@ class LoginView(APIView):
         password = request.data.get("password")
         user = authenticate(username=username, password=password)
 
-        if user is not None:
+        if user:
             token, _ = Token.objects.get_or_create(user=user)
             return Response({"token": token.key})
-        else:
-            return Response(
-                {"error": "Invalid Credentials"},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
+        return Response({"error": "Invalid Credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 # ==========================
-# 🔹 BLOG APP (POSTS & COMMENTS)
+# 🔹 PERMISSIONS
 # ==========================
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
     """
-    Custom permission to only allow owners of an object to edit or delete it.
+    Only owners can edit/delete objects.
     """
     def has_object_permission(self, request, view, obj):
-        # Read-only permissions are allowed for any request (GET, HEAD, OPTIONS)
         if request.method in permissions.SAFE_METHODS:
             return True
-        # Write permissions are only allowed to the owner of the object
         return obj.author == request.user
 
+
+# ==========================
+# 🔹 POSTS & COMMENTS
+# ==========================
 
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
@@ -67,6 +65,34 @@ class PostViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    # Likes
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def like(self, request, pk=None):
+        post = self.get_object()
+        like, created = Like.objects.get_or_create(post=post, user=request.user)
+        if created:
+            # Notification
+            try:
+                from notifications.models import Notification
+                Notification.objects.create(
+                    recipient=post.author,
+                    actor=request.user,
+                    verb='liked your post',
+                    target=post
+                )
+            except Exception:
+                pass
+            return Response({'status': 'liked'}, status=status.HTTP_201_CREATED)
+        return Response({'status': 'already_liked'}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def unlike(self, request, pk=None):
+        post = self.get_object()
+        deleted, _ = Like.objects.filter(post=post, user=request.user).delete()
+        if deleted:
+            return Response({'status': 'unliked'}, status=status.HTTP_200_OK)
+        return Response({'status': 'not_liked'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
