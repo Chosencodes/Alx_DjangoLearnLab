@@ -1,4 +1,3 @@
-# accounts/views.py
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -7,21 +6,15 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, get_user_model
 from django.shortcuts import get_object_or_404
 
-# Import for feed view
+# Feed view
 from rest_framework.generics import ListAPIView
-
-# Import your serializers
-from .serializers import RegisterSerializer, UserSerializer
-
-# Import your Post model and serializer for FeedView
 from posts.models import Post
 from posts.serializers import PostSerializer
 
-# Import pagination safely
+# Pagination (safe fallback)
 try:
     from posts.pagination import StandardResultsSetPagination
 except ImportError:
-    # fallback if pagination not yet created
     from rest_framework.pagination import PageNumberPagination
 
     class StandardResultsSetPagination(PageNumberPagination):
@@ -29,29 +22,34 @@ except ImportError:
         page_size_query_param = 'page_size'
         max_page_size = 100
 
+# Serializers
+from .serializers import RegisterSerializer, UserSerializer
+
+# Use custom user model
 User = get_user_model()
 
+
+# ---------------- FOLLOW SYSTEM ---------------- #
 class FollowUserView(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, user_id):
         target_user = get_object_or_404(User, id=user_id)
         if target_user == request.user:
             return Response({"detail": "Cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
-        
         request.user.following.add(target_user)
         return Response({"status": "followed"}, status=status.HTTP_200_OK)
 
 
 class UnfollowUserView(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, user_id):
         target_user = get_object_or_404(User, id=user_id)
         request.user.following.remove(target_user)
         return Response({"status": "unfollowed"}, status=status.HTTP_200_OK)
 
-# ---------------- FOLLOW SYSTEM ---------------- #
+
 class FollowToggleView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -67,7 +65,7 @@ class FollowToggleView(APIView):
             request.user.following.add(target)
             action = 'followed'
 
-            # Notification (optional, safe import)
+            # Notifications (optional)
             try:
                 from notifications.models import Notification
                 Notification.objects.create(
@@ -143,4 +141,3 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
-
