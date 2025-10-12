@@ -9,4 +9,36 @@
     <a href="{% url 'blog:post_delete' post.pk %}">Delete</a>
   {% endif %}
   <p><a href="{% url 'blog:post_list' %}">Back to all posts</a></p>
+
+  <hr>
+<h3>Comments ({{ post.comments.count }})</h3>
+
+{% if user.is_authenticated %}
+  <form method="post" action="{% url 'blog:comment_create' post_pk=post.pk %}">
+    {% csrf_token %}
+    {{ comment_form.as_p }}
+    <button type="submit">Add Comment</button>
+  </form>
+{% else %}
+  <p><a href="{% url 'blog:login' %}">Log in</a> to comment.</p>
+{% endif %}
+
+<ul>
+  {% for comment in post.comments.all %}
+    <li>
+      <p><strong>{{ comment.author.username }}</strong> — <small>{{ comment.created_at|date:"M d, Y H:i" }}</small></p>
+      <p>{{ comment.content|linebreaks }}</p>
+
+      {% if user == comment.author %}
+        <p>
+          <a href="{% url 'blog:comment_edit' post_pk=post.pk comment_pk=comment.pk %}">Edit</a> |
+          <a href="{% url 'blog:comment_delete' post_pk=post.pk comment_pk=comment.pk %}">Delete</a>
+        </p>
+      {% endif %}
+    </li>
+  {% empty %}
+    <li>No comments yet — be the first!</li>
+  {% endfor %}
+</ul>
+
 {% endblock %}
