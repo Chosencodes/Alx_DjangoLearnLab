@@ -1,27 +1,14 @@
 from django.urls import path
-from .views import (
-    PostListView, PostDetailView, PostCreateView, PostUpdateView, PostDeleteView,
-    CommentCreateView, CommentUpdateView, CommentDeleteView,
-    PostByTagListView, search_posts
-)
+from django.contrib.auth import views as auth_views
+from . import views
 
 app_name = 'blog'
 
 urlpatterns = [
-    path('', PostListView.as_view(), name='post_list'),
-    path('post/<int:pk>/', PostDetailView.as_view(), name='post_detail'),
-    path('post/new/', PostCreateView.as_view(), name='post_create'),
-    path('post/<int:pk>/update/', PostUpdateView.as_view(), name='post_update'),
-    path('post/<int:pk>/delete/', PostDeleteView.as_view(), name='post_delete'),
+    path('register/', views.register, name='register'),
+    path('profile/', views.profile, name='profile'),
 
-    # Comments
-    path('post/<int:post_id>/comments/new/', CommentCreateView.as_view(), name='comment_create'),
-    path('comment/<int:pk>/update/', CommentUpdateView.as_view(), name='comment_update'),
-    path('comment/<int:pk>/delete/', CommentDeleteView.as_view(), name='comment_delete'),
-
-    # Tagging
-    path('tags/<slug:tag_slug>/', PostByTagListView.as_view(), name='posts_by_tag'),
-
-    # Search
-    path('search/', search_posts, name='search_posts'),
+    # Login / Logout using Django built-in views with template overrides
+    path('login/', auth_views.LoginView.as_view(template_name='blog/login.html'), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(template_name='blog/logout.html'), name='logout'),
 ]
