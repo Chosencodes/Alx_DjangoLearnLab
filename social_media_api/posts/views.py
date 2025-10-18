@@ -9,17 +9,16 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticate
 from .serializers import UserSerializer, PostSerializer, CommentSerializer, LikeSerializer
 from .models import Post, Comment, Like
 from posts.pagination import StandardResultsSetPagination  # if exists, else fallback
+from accounts.models import CustomUser
 
 class FeedView(generics.ListAPIView):
     serializer_class = PostSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = StandardResultsSetPagination
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        following_users = user.following.all()  # must be named exactly like this
+        following_users = user.following.all()
         return Post.objects.filter(author__in=following_users).order_by('-created_at')
-    
 
     
 class RegisterView(generics.CreateAPIView):

@@ -13,6 +13,8 @@ urlpatterns = [
     # Follow/unfollow endpoints
     path('follow/<int:user_id>/', FollowUserView.as_view(), name='follow-user'),
     path('unfollow/<int:user_id>/', UnfollowUserView.as_view(), name='unfollow-user'),
+
+    # Optional extras
     path('follow-toggle/<int:user_id>/', FollowToggleView.as_view(), name='follow-toggle'),
     path('follows/', FollowListView.as_view(), name='follow-list'),
 ]
