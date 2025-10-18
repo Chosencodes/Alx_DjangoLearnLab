@@ -19,7 +19,18 @@ import os
 import dj_database_url
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_SSL_REDIRECT = True
+
 
 # SECURITY
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
@@ -45,9 +56,10 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # if behind proxy
 SECRET_KEY = 'django-insecure-afd@)^0^8wq0yns*j5wp5-#jxs-_e057zrg(x8^$ainov)6v!u'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'your-domain.com']
+
 
 
 # Application definition
@@ -191,8 +203,16 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 
 
 
-import os
-BASE_DIR = Path(__file__).resolve().parent.parent  # already present in modern Django projects
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Optional if using S3
+# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
