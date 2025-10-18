@@ -111,3 +111,39 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+class LikePostView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        post = generics.get_object_or_404(Post, pk=pk)
+        like, created = Like.objects.get_or_create(user=request.user, post=post)
+
+        if created:
+            # Optional: Create notification
+            try:
+                from notifications.models import Notification
+                Notification.objects.create(
+                    recipient=post.author,
+                    actor=request.user,
+                    verb='liked your post',
+                    target=post
+                )
+            except Exception:
+                pass
+
+            return Response({'status': 'liked'}, status=status.HTTP_201_CREATED)
+        return Response({'status': 'already_liked'}, status=status.HTTP_200_OK)
+
+
+# ✅ Unlike a post
+class UnlikePostView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        post = generics.get_object_or_404(Post, pk=pk)
+        like = Like.objects.filter(user=request.user, post=post).first()
+
+        if like:
+            like.delete()
+            return Response({'status': 'unliked'}, status=status.HTTP_200_OK)
+        return Response({'status': 'not_liked'}, status=status.HTTP_400_BAD_REQUEST)
